@@ -10,4 +10,4 @@ Tools:
 - Bug Kanban board
 
 All in one integrated ecosystem.
-Coming soonTM 2025.
+Coming soonTM 2025/26.
