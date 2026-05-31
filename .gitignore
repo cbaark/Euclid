@@ -1,0 +1,17 @@
+# database
+euclid.db
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+
+# env files
+.env
+*.env
+venv/
+.venv/
+
+# os
+.DS_Store
+Thumbs.db

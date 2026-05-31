@@ -1,0 +1,4 @@
+# these must be installed for Euclid to run
+
+Flask==3.1.2
+Werkzeug==3.1.5
