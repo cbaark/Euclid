@@ -35,3 +35,144 @@ REQ_PRIORITY = {"High", "Medium", "Low"}
 REQ_STATUS = {"Not Started", "In Progress", "Complete"}
 REF_TYPES = {"Documentation", "Article", "Library", "Book", "Tutorial", "Video", "Other"}
 
+
+def get_db():
+    if "db" not in g:
+        g.db = sqlite3.connect(DB_PATH)
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA foreign_keys = ON")
+    return g.db
+
+
+@app.teardown_appcontext
+def close_db(exc):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
+
+def clean(value):
+    return value.strip() if isinstance(value, str) else value
+
+
+def missing_fields(data, fields):
+    out = []
+    for f in fields:
+        v = data.get(f)
+        if v is None or (isinstance(v, str) and v.strip() == ""):
+            out.append(f)
+    return out
+
+
+def valid_password(pw):
+    # min 8, at least one number, at least one uppercase
+    if not isinstance(pw, str) or len(pw) < 8:
+        return False
+    return bool(re.search(r"\d", pw)) and bool(re.search(r"[A-Z]", pw))
+
+
+def valid_url(url):
+    try:
+        parts = urlparse(url)
+    except ValueError:
+        return False
+    return parts.scheme in ("http", "https") and bool(parts.netloc)
+
+
+def today_str():
+    return date.today().isoformat()
+
+
+def login_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if "user_id" not in session:
+            # api callers want json, page callers want a redirect
+            if request.path.startswith("/api/"):
+                return jsonify({"error": "Not authenticated"}), 401
+            return redirect("/login")
+        return fn(*args, **kwargs)
+
+    return wrapper
+
+
+def new_session(user_id, remember):
+    session.clear()
+    session["user_id"] = user_id
+    session["csrf_token"] = secrets.token_hex(32)
+    session.permanent = bool(remember)
+
+
+@app.before_request
+def csrf_protect():
+    # only guard state changing api calls, login/register are exempt
+    if request.path.startswith("/api/") and request.method in ("POST", "PATCH", "PUT", "DELETE"):
+        sent = request.headers.get("X-CSRF-Token", "")
+        if not sent or sent != session.get("csrf_token"):
+            return jsonify({"error": "Bad or missing CSRF token"}), 403
+
+
+def current_user():
+    return session.get("user_id")
+
+
+def json_body():
+    return request.get_json(silent=True) or {}
+
+def page(name):
+    return send_from_directory(HTML_DIR, name)
+
+
+@app.route("/")
+def root():
+    return redirect("/dashboard" if "user_id" in session else "/login")
+
+
+@app.route("/login")
+def login_page():
+    return page("login.html")
+
+
+@app.route("/register")
+def register_page():
+    return page("register.html")
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard_page():
+    return page("dashboard.html")
+
+
+@app.route("/journal")
+@login_required
+def journal_page():
+    return page("journal.html")
+
+
+@app.route("/kanban")
+@login_required
+def kanban_page():
+    return page("kanban.html")
+
+
+@app.route("/requirements")
+@login_required
+def requirements_page():
+    return page("requirements.html")
+
+
+@app.route("/references")
+@login_required
+def references_page():
+    return page("references.html")
+
+@app.route("/manifest.json")
+def manifest():
+    return send_from_directory(BASE_DIR, "manifest.json")
+
+
+@app.route("/service_worker.js")
+def service_worker():
+    resp = send_from_directory(BASE_DIR, "service_worker.js")
+    resp.headers["Service-Worker-Allowed"] = "/"
+    return resp
