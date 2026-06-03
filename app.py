@@ -176,3 +176,78 @@ def service_worker():
     resp = send_from_directory(BASE_DIR, "service_worker.js")
     resp.headers["Service-Worker-Allowed"] = "/"
     return resp
+
+@app.route("/register", methods=["POST"])
+def register():
+    data = json_body()
+    username = clean(data.get("username", ""))
+    password = data.get("password", "")
+    confirm = data.get("confirm_password", "")
+
+    miss = missing_fields(data, ["username", "password", "confirm_password"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+    if len(username) < 3 or len(username) > 40:
+        return jsonify({"error": "Username must be 3 to 40 characters"}), 400
+    if not valid_password(password):
+        return jsonify({"error": "Password needs 8+ chars, a number and an uppercase letter"}), 400
+    if password != confirm:
+        return jsonify({"error": "Passwords do not match"}), 400
+
+    db = get_db()
+    exists = db.execute("SELECT 1 FROM users WHERE username = ?", (username,)).fetchone()
+    if exists:
+        return jsonify({"error": "That username is taken"}), 409
+
+    cur = db.execute(
+        "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+        (username, generate_password_hash(password)),
+    )
+    db.commit()
+    new_session(cur.lastrowid, remember=False)
+    return jsonify({"redirect": "/dashboard"})
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = json_body()
+    username = clean(data.get("username", ""))
+    password = data.get("password", "")
+    remember = data.get("remember", False)
+
+    miss = missing_fields(data, ["username", "password"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+
+    db = get_db()
+    user = db.execute(
+        "SELECT id, password_hash FROM users WHERE username = ?", (username,)
+    ).fetchone()
+    if user is None or not check_password_hash(user["password_hash"], password):
+        return jsonify({"error": "Invalid username or password"}), 401
+
+    new_session(user["id"], remember)
+    return jsonify({"redirect": "/dashboard"})
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
+
+@app.route("/api/me")
+@login_required
+def whoami():
+    db = get_db()
+    row = db.execute("SELECT username FROM users WHERE id = ?", (current_user(),)).fetchone()
+    return jsonify({"username": row["username"] if row else ""})
+
+
+@app.route("/api/csrf")
+@login_required
+def get_csrf():
+    # client grabs this once then sends it back on writes
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_hex(32)
+    return jsonify({"csrf_token": session["csrf_token"]})
