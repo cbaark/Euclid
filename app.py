@@ -251,3 +251,60 @@ def get_csrf():
     if "csrf_token" not in session:
         session["csrf_token"] = secrets.token_hex(32)
     return jsonify({"csrf_token": session["csrf_token"]})
+
+@app.route("/api/dashboard")
+@login_required
+def dashboard_stats():
+    db = get_db()
+    uid = current_user()
+
+    journal_count = db.execute(
+        "SELECT COUNT(*) c FROM journal_entries WHERE user_id = ?", (uid,)
+    ).fetchone()["c"]
+    urgent_bugs = db.execute(
+        "SELECT COUNT(*) c FROM kanban_issues WHERE user_id = ? AND status = 'Urgent'", (uid,)
+    ).fetchone()["c"]
+    req_total = db.execute(
+        "SELECT COUNT(*) c FROM requirements WHERE user_id = ?", (uid,)
+    ).fetchone()["c"]
+    req_done = db.execute(
+        "SELECT COUNT(*) c FROM requirements WHERE user_id = ? AND status = 'Complete'", (uid,)
+    ).fetchone()["c"]
+    ref_count = db.execute(
+        'SELECT COUNT(*) c FROM "references" WHERE user_id = ?', (uid,)
+    ).fetchone()["c"]
+
+    # recent activity part !!
+    activity = db.execute(
+        """
+        SELECT kind, label, ts FROM (
+            SELECT 'journal' AS kind, title AS label,
+                   COALESCE(updated_at, created_at) AS ts
+            FROM journal_entries WHERE user_id = :uid
+            UNION ALL
+            SELECT 'kanban', title, COALESCE(updated_at, created_at)
+            FROM kanban_issues WHERE user_id = :uid
+            UNION ALL
+            SELECT 'reference', title, created_at
+            FROM "references" WHERE user_id = :uid
+            UNION ALL
+            SELECT 'requirement', req_id || ' ' || COALESCE(description, ''),
+                   COALESCE(updated_at, created_at)
+            FROM requirements WHERE user_id = :uid
+        )
+        ORDER BY ts DESC
+        LIMIT 5
+        """,
+        {"uid": uid},
+    ).fetchall()
+
+    return jsonify(
+        {
+            "journal_count": journal_count,
+            "urgent_bugs": urgent_bugs,
+            "requirements_done": req_done,
+            "requirements_total": req_total,
+            "reference_count": ref_count,
+            "recent_activity": [dict(r) for r in activity],
+        }
+    )
