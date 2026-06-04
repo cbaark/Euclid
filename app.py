@@ -418,3 +418,112 @@ def journal_delete(entry_id):
     )
     db.commit()
     return jsonify({"ok": True})
+
+@app.route("/api/kanban", methods=["GET"])
+@login_required
+def kanban_list():
+    db = get_db()
+    rows = db.execute(
+        "SELECT * FROM kanban_issues WHERE user_id = ? ORDER BY id DESC",
+        (current_user(),),
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/kanban", methods=["POST"])
+@login_required
+def kanban_create():
+    data = json_body()
+    miss = missing_fields(data, ["title", "status"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+
+    status = clean(data["status"])
+    priority = clean(data.get("priority", ""))
+    if status not in KANBAN_STATUS:
+        return jsonify({"error": "Invalid status"}), 400
+    if priority and priority not in KANBAN_PRIORITY:
+        return jsonify({"error": "Invalid priority"}), 400
+
+    reported = clean(data.get("reported_date", "")) or today_str()
+    db = get_db()
+    cur = db.execute(
+        """INSERT INTO kanban_issues
+           (user_id, title, description, status, priority, reported_date)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (
+            current_user(),
+            clean(data["title"]),
+            data.get("description", ""),
+            status,
+            priority,
+            reported,
+        ),
+    )
+    db.commit()
+    return jsonify({"id": cur.lastrowid}), 201
+
+
+@app.route("/api/kanban/<int:issue_id>", methods=["PATCH"])
+@login_required
+def kanban_update(issue_id):
+    ok, err = row_owned_or_404("kanban_issues", issue_id)
+    if not ok:
+        return err
+    data = json_body()
+    db = get_db()
+
+    # drag and drop vs full update conditional
+    if set(data.keys()) <= {"status"}:
+        status = clean(data.get("status", ""))
+        if status not in KANBAN_STATUS:
+            return jsonify({"error": "Invalid status"}), 400
+        db.execute(
+            "UPDATE kanban_issues SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?",
+            (status, issue_id, current_user()),
+        )
+        db.commit()
+        return jsonify({"ok": True})
+
+    miss = missing_fields(data, ["title", "status"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+    status = clean(data["status"])
+    priority = clean(data.get("priority", ""))
+    if status not in KANBAN_STATUS:
+        return jsonify({"error": "Invalid status"}), 400
+    if priority and priority not in KANBAN_PRIORITY:
+        return jsonify({"error": "Invalid priority"}), 400
+    reported = clean(data.get("reported_date", "")) or today_str()
+    db.execute(
+        """UPDATE kanban_issues
+           SET title = ?, description = ?, status = ?, priority = ?,
+               reported_date = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND user_id = ?""",
+        (
+            clean(data["title"]),
+            data.get("description", ""),
+            status,
+            priority,
+            reported,
+            issue_id,
+            current_user(),
+        ),
+    )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/kanban/<int:issue_id>", methods=["DELETE"])
+@login_required
+def kanban_delete(issue_id):
+    ok, err = row_owned_or_404("kanban_issues", issue_id)
+    if not ok:
+        return err
+    db = get_db()
+    db.execute(
+        "DELETE FROM kanban_issues WHERE id = ? AND user_id = ?",
+        (issue_id, current_user()),
+    )
+    db.commit()
+    return jsonify({"ok": True})
