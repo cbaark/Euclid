@@ -527,3 +527,140 @@ def kanban_delete(issue_id):
     )
     db.commit()
     return jsonify({"ok": True})
+
+def next_req_id(db, uid, req_type):
+    prefix = "FR" if req_type.startswith("Functional") else "NFR"
+    rows = db.execute(
+        "SELECT req_id FROM requirements WHERE user_id = ? AND req_id LIKE ?",
+        (uid, prefix + "-%"),
+    ).fetchall()
+    biggest = 0
+    for r in rows:
+        # exact match or else null
+        tail = r["req_id"].split("-", 1)
+        head = tail[0]
+        if head != prefix:
+            continue
+        try:
+            num = int(tail[1])
+        except (IndexError, ValueError):
+            continue
+        biggest = max(biggest, num)
+    return "%s-%03d" % (prefix, biggest + 1)
+
+
+@app.route("/api/requirements", methods=["GET"])
+@login_required
+def requirements_list():
+    db = get_db()
+    rows = db.execute(
+        "SELECT * FROM requirements WHERE user_id = ? ORDER BY req_id",
+        (current_user(),),
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/requirements", methods=["POST"])
+@login_required
+def requirements_create():
+    data = json_body()
+    miss = missing_fields(data, ["type", "description"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+
+    req_type = clean(data["type"])
+    priority = clean(data.get("priority", ""))
+    status = clean(data.get("status", "")) or "Not Started"
+    module = clean(data.get("assigned_module", ""))
+    if req_type not in REQ_TYPES:
+        return jsonify({"error": "Invalid type"}), 400
+    if priority and priority not in REQ_PRIORITY:
+        return jsonify({"error": "Invalid priority"}), 400
+    if status not in REQ_STATUS:
+        return jsonify({"error": "Invalid status"}), 400
+    if module and module not in MODULES:
+        return jsonify({"error": "Invalid module"}), 400
+
+    db = get_db()
+    req_id = next_req_id(db, current_user(), req_type)
+    cur = db.execute(
+        """INSERT INTO requirements
+           (user_id, req_id, type, description, priority, status,
+            assigned_module, acceptance_criteria, source_stakeholder)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            current_user(),
+            req_id,
+            req_type,
+            data["description"],
+            priority,
+            status,
+            module,
+            data.get("acceptance_criteria", ""),
+            clean(data.get("source_stakeholder", "")),
+        ),
+    )
+    db.commit()
+    return jsonify({"id": cur.lastrowid, "req_id": req_id}), 201
+
+
+@app.route("/api/requirements/<int:req_id>", methods=["PATCH"])
+@login_required
+def requirements_update(req_id):
+    ok, err = row_owned_or_404("requirements", req_id)
+    if not ok:
+        return err
+    data = json_body()
+    miss = missing_fields(data, ["type", "description"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+
+    req_type = clean(data["type"])
+    priority = clean(data.get("priority", ""))
+    status = clean(data.get("status", "")) or "Not Started"
+    module = clean(data.get("assigned_module", ""))
+    if req_type not in REQ_TYPES:
+        return jsonify({"error": "Invalid type"}), 400
+    if priority and priority not in REQ_PRIORITY:
+        return jsonify({"error": "Invalid priority"}), 400
+    if status not in REQ_STATUS:
+        return jsonify({"error": "Invalid status"}), 400
+    if module and module not in MODULES:
+        return jsonify({"error": "Invalid module"}), 400
+
+    db = get_db()
+    db.execute(
+        """UPDATE requirements
+           SET type = ?, description = ?, priority = ?, status = ?,
+               assigned_module = ?, acceptance_criteria = ?, source_stakeholder = ?,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND user_id = ?""",
+        (
+            req_type,
+            data["description"],
+            priority,
+            status,
+            module,
+            data.get("acceptance_criteria", ""),
+            clean(data.get("source_stakeholder", "")),
+            req_id,
+            current_user(),
+        ),
+    )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/requirements/<int:req_id>", methods=["DELETE"])
+@login_required
+def requirements_delete(req_id):
+    ok, err = row_owned_or_404("requirements", req_id)
+    if not ok:
+        return err
+    db = get_db()
+    db.execute(
+        "DELETE FROM requirements WHERE id = ? AND user_id = ?",
+        (req_id, current_user()),
+    )
+    db.commit()
+    return jsonify({"ok": True})
