@@ -308,3 +308,113 @@ def dashboard_stats():
             "recent_activity": [dict(r) for r in activity],
         }
     )
+
+def row_owned_or_404(table, row_id):
+    db = get_db()
+    row = db.execute(
+        'SELECT user_id FROM "%s" WHERE id = ?' % table, (row_id,)
+    ).fetchone()
+    if row is None:
+        return False, (jsonify({"error": "Not found"}), 404)
+    if row["user_id"] != current_user():
+        return False, (jsonify({"error": "Not found"}), 404)
+    return True, None
+
+
+@app.route("/api/journal", methods=["GET"])
+@login_required
+def journal_list():
+    db = get_db()
+    rows = db.execute(
+        "SELECT * FROM journal_entries WHERE user_id = ? ORDER BY date DESC, id DESC",
+        (current_user(),),
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/journal", methods=["POST"])
+@login_required
+def journal_create():
+    data = json_body()
+    miss = missing_fields(data, ["title", "date", "content"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+
+    entry_type = clean(data.get("entry_type", ""))
+    related = clean(data.get("related_module", ""))
+    if entry_type and entry_type not in ENTRY_TYPES:
+        return jsonify({"error": "Invalid entry type"}), 400
+    if related and related not in MODULES:
+        return jsonify({"error": "Invalid related module"}), 400
+
+    db = get_db()
+    cur = db.execute(
+        """INSERT INTO journal_entries
+           (user_id, title, date, project_tag, entry_type, related_module, content)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (
+            current_user(),
+            clean(data["title"]),
+            clean(data["date"]),
+            clean(data.get("project_tag", "")),
+            entry_type,
+            related,
+            data["content"],
+        ),
+    )
+    db.commit()
+    return jsonify({"id": cur.lastrowid}), 201
+
+
+@app.route("/api/journal/<int:entry_id>", methods=["PATCH"])
+@login_required
+def journal_update(entry_id):
+    ok, err = row_owned_or_404("journal_entries", entry_id)
+    if not ok:
+        return err
+    data = json_body()
+    miss = missing_fields(data, ["title", "date", "content"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+
+    entry_type = clean(data.get("entry_type", ""))
+    related = clean(data.get("related_module", ""))
+    if entry_type and entry_type not in ENTRY_TYPES:
+        return jsonify({"error": "Invalid entry type"}), 400
+    if related and related not in MODULES:
+        return jsonify({"error": "Invalid related module"}), 400
+
+    db = get_db()
+    db.execute(
+        """UPDATE journal_entries
+           SET title = ?, date = ?, project_tag = ?, entry_type = ?,
+               related_module = ?, content = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND user_id = ?""",
+        (
+            clean(data["title"]),
+            clean(data["date"]),
+            clean(data.get("project_tag", "")),
+            entry_type,
+            related,
+            data["content"],
+            entry_id,
+            current_user(),
+        ),
+    )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/journal/<int:entry_id>", methods=["DELETE"])
+@login_required
+def journal_delete(entry_id):
+    ok, err = row_owned_or_404("journal_entries", entry_id)
+    if not ok:
+        return err
+    db = get_db()
+    db.execute(
+        "DELETE FROM journal_entries WHERE id = ? AND user_id = ?",
+        (entry_id, current_user()),
+    )
+    db.commit()
+    return jsonify({"ok": True})
