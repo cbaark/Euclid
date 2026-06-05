@@ -664,3 +664,129 @@ def requirements_delete(req_id):
     )
     db.commit()
     return jsonify({"ok": True})
+
+@app.route("/api/references", methods=["GET"])
+@login_required
+def references_list():
+    db = get_db()
+    rows = db.execute(
+        'SELECT * FROM "references" WHERE user_id = ? ORDER BY id DESC',
+        (current_user(),),
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/references", methods=["POST"])
+@login_required
+def references_create():
+    data = json_body()
+    miss = missing_fields(data, ["title"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+
+    url = clean(data.get("url", ""))
+    ref_type = clean(data.get("ref_type", ""))
+    module = clean(data.get("related_module", ""))
+    if url and not valid_url(url):
+        return jsonify({"error": "URL must start with http:// or https://"}), 400
+    if ref_type and ref_type not in REF_TYPES:
+        return jsonify({"error": "Invalid reference type"}), 400
+    if module and module not in MODULES:
+        return jsonify({"error": "Invalid related module"}), 400
+
+    db = get_db()
+    if url:
+        dupe = db.execute(
+            'SELECT 1 FROM "references" WHERE user_id = ? AND url = ?',
+            (current_user(), url),
+        ).fetchone()
+        if dupe:
+            return jsonify({"error": "You already saved that URL"}), 409
+
+    cur = db.execute(
+        """INSERT INTO "references"
+           (user_id, title, url, ref_type, tags, notes, date_added, related_module)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            current_user(),
+            clean(data["title"]),
+            url,
+            ref_type,
+            clean(data.get("tags", "")),
+            data.get("notes", ""),
+            clean(data.get("date_added", "")) or today_str(),
+            module,
+        ),
+    )
+    db.commit()
+    return jsonify({"id": cur.lastrowid}), 201
+
+
+@app.route("/api/references/<int:ref_id>", methods=["PATCH"])
+@login_required
+def references_update(ref_id):
+    ok, err = row_owned_or_404("references", ref_id)
+    if not ok:
+        return err
+    data = json_body()
+    miss = missing_fields(data, ["title"])
+    if miss:
+        return jsonify({"error": "Missing fields: " + ", ".join(miss)}), 400
+
+    url = clean(data.get("url", ""))
+    ref_type = clean(data.get("ref_type", ""))
+    module = clean(data.get("related_module", ""))
+    if url and not valid_url(url):
+        return jsonify({"error": "URL must start with http:// or https://"}), 400
+    if ref_type and ref_type not in REF_TYPES:
+        return jsonify({"error": "Invalid reference type"}), 400
+    if module and module not in MODULES:
+        return jsonify({"error": "Invalid related module"}), 400
+
+    db = get_db()
+    if url:
+        dupe = db.execute(
+            'SELECT 1 FROM "references" WHERE user_id = ? AND url = ? AND id != ?',
+            (current_user(), url, ref_id),
+        ).fetchone()
+        if dupe:
+            return jsonify({"error": "You already saved that URL"}), 409
+
+    db.execute(
+        """UPDATE "references"
+           SET title = ?, url = ?, ref_type = ?, tags = ?, notes = ?,
+               date_added = ?, related_module = ?
+           WHERE id = ? AND user_id = ?""",
+        (
+            clean(data["title"]),
+            url,
+            ref_type,
+            clean(data.get("tags", "")),
+            data.get("notes", ""),
+            clean(data.get("date_added", "")) or today_str(),
+            module,
+            ref_id,
+            current_user(),
+        ),
+    )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/references/<int:ref_id>", methods=["DELETE"])
+@login_required
+def references_delete(ref_id):
+    ok, err = row_owned_or_404("references", ref_id)
+    if not ok:
+        return err
+    db = get_db()
+    db.execute(
+        'DELETE FROM "references" WHERE id = ? AND user_id = ?',
+        (ref_id, current_user()),
+    )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+if __name__ == "__main__":
+    app.run(debug=False, port=5000)
