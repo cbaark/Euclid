@@ -30,3 +30,71 @@
         <a href="/logout" class="btn btn-sm">Logout</a>
       </div>
     </aside>
+
+    <main class="main">
+      <div class="topbar"><span class="bracket">MAIN DASHBOARD</span></div>
+      <div class="content">
+
+        <div class="panel">
+          <div class="panel-head"><span class="bracket">QUICK STATS - OVERVIEW ACROSS ALL MODULES</span></div>
+          <div class="panel-body">
+            <div class="stat-row">
+              <div class="stat"><div class="stat-num" id="stat-journal">0</div><div class="stat-label">Journal Entries</div></div>
+              <div class="stat"><div class="stat-num" id="stat-urgent">0</div><div class="stat-label">Urgent Bugs</div></div>
+              <div class="stat"><div class="stat-num" id="stat-req">0 / 0</div><div class="stat-label">Requirements Done</div></div>
+              <div class="stat"><div class="stat-num" id="stat-ref">0</div><div class="stat-label">References Saved</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="panel">
+            <div class="panel-head"><span class="bracket">DEVELOPER JOURNAL</span></div>
+            <div class="panel-body">
+              <p class="note">Log daily dev notes, decisions and reflections</p>
+              <div id="card-journal">-</div>
+              <a href="/journal" class="btn btn-primary card-btn">Open Developer Journal</a>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><span class="bracket">BUG TRACKER</span></div>
+            <div class="panel-body">
+              <p class="note">Track bugs across urgent, to-do and completed columns</p>
+              <div id="card-kanban">-</div>
+              <a href="/kanban" class="btn btn-primary card-btn">Open Bug Tracker</a>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><span class="bracket">REQUIREMENTS TRACKER</span></div>
+            <div class="panel-body">
+              <p class="note">Manage functional and non-functional requirements</p>
+              <div id="card-req">-</div>
+              <a href="/requirements" class="btn btn-primary card-btn">Open Requirements Tracker</a>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><span class="bracket">REFERENCE LIST</span></div>
+            <div class="panel-body">
+              <p class="note">Store and organise research links and resources</p>
+              <div id="card-ref">-</div>
+              <a href="/references" class="btn btn-primary card-btn">Open Reference List</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="bracket">RECENT ACTIVITY - LAST 5 ACTIONS ACROSS ALL MODULES</span></div>
+          <div class="panel-body">
+            <ul class="activity" id="activity"></ul>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/js/offline.js"></script>
+  <script src="/static/js/utils.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
