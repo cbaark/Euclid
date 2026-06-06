@@ -9,3 +9,50 @@
   <link rel="stylesheet" href="/static/css/base.css">
   <link rel="stylesheet" href="/static/css/auth.css">
 </head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-logo">EUCLID</div>
+    <div class="auth-tagline">Create your account</div>
+
+    <div class="panel">
+      <div class="panel-head"><span class="bracket">REGISTRATION</span></div>
+      <div class="panel-body">
+        <form id="register-form" novalidate>
+          <div class="field">
+            <label for="username">Display Name / Username *</label>
+            <input type="text" id="username" name="username" autocomplete="username">
+            <div class="hint">Used as your project identifier, must be unique</div>
+            <div class="field-error" id="err-username"></div>
+          </div>
+
+          <div class="field">
+            <label for="password">Password *</label>
+            <input type="password" id="password" name="password" autocomplete="new-password">
+            <div class="hint">Min 8 chars, must include a number and an uppercase letter</div>
+            <div class="strength" id="strength"><span></span><span></span><span></span><span></span></div>
+            <div class="strength-label" id="strength-label">Strength: -</div>
+            <div class="field-error" id="err-password"></div>
+          </div>
+
+          <div class="field">
+            <label for="confirm">Confirm Password *</label>
+            <input type="password" id="confirm" name="confirm" autocomplete="new-password">
+            <div class="field-error" id="err-confirm"></div>
+          </div>
+
+          <div class="auth-actions">
+            <button type="submit" class="btn btn-primary">CREATE ACCOUNT</button>
+          </div>
+        </form>
+        <div class="auth-alt">
+          Already have an account? <a href="/login"><strong>Login here</strong></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/offline.js"></script>
+  <script src="/static/js/utils.js"></script>
+  <script src="/static/js/register.js"></script>
+</body>
+</html>

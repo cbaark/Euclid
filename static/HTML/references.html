@@ -30,3 +30,116 @@
         <a href="/logout" class="btn btn-sm">Logout</a>
       </div>
     </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <span class="bracket">REFERENCE LIST</span>
+        <button class="btn btn-primary btn-sm" id="add-btn">+ Add Reference</button>
+      </div>
+      <div class="content">
+
+        <div class="panel">
+          <div class="panel-head"><span class="bracket">FILTER BY TYPE</span></div>
+          <div class="panel-body">
+            <div class="tabs" id="tabs">
+              <button class="tab active" data-type="ALL">All</button>
+              <button class="tab" data-type="Documentation">Documentation</button>
+              <button class="tab" data-type="Article">Article</button>
+              <button class="tab" data-type="Library">Library</button>
+              <button class="tab" data-type="Book">Book</button>
+              <button class="tab" data-type="Tutorial">Tutorial</button>
+              <button class="tab" data-type="Video">Video</button>
+              <button class="tab" data-type="Other">Other</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="bracket">REFERENCES SAVED</span></div>
+          <div class="panel-body">
+            <table class="ref-table">
+              <thead>
+                <tr><th>Title</th><th>Type</th><th>Tags</th><th>Date Added</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="ref-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" id="ref-form-panel" hidden>
+          <div class="panel-head">
+            <span class="bracket" id="ref-form-title">ADD REFERENCE</span>
+            <button class="btn btn-sm" id="close-form">Close</button>
+          </div>
+          <div class="panel-body">
+            <form id="ref-form" novalidate>
+              <input type="hidden" id="ref-row-id">
+              <div class="row">
+                <div class="field">
+                  <label for="title">Reference Title *</label>
+                  <input type="text" id="title">
+                  <div class="field-error" id="err-title"></div>
+                </div>
+                <div class="field">
+                  <label for="ref_type">Reference Type</label>
+                  <select id="ref_type">
+                    <option value="">Select Type</option>
+                    <option>Documentation</option>
+                    <option>Article</option>
+                    <option>Library</option>
+                    <option>Book</option>
+                    <option>Tutorial</option>
+                    <option>Video</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="url">URL / Link</label>
+                <input type="url" id="url" placeholder="https://example.com">
+                <div class="hint">Leave blank for offline sources like books</div>
+                <div class="field-error" id="err-url"></div>
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label for="tags">Tags</label>
+                  <input type="text" id="tags" placeholder="comma separated e.g. react, auth">
+                </div>
+                <div class="field">
+                  <label for="date_added">Date Added</label>
+                  <input type="date" id="date_added">
+                </div>
+                <div class="field">
+                  <label for="related_module">Related Module / Context</label>
+                  <select id="related_module">
+                    <option value="">Select Module</option>
+                    <option>General</option>
+                    <option>Bug Tracker</option>
+                    <option>Requirements</option>
+                    <option>References</option>
+                    <option>Authentication</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="notes">Notes / Why it was used</label>
+                <textarea id="notes" rows="3"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Reference</button>
+                <button type="button" class="btn" id="cancel-btn">Cancel</button>
+                <button type="button" class="btn btn-danger" id="delete-btn" hidden>Delete</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/js/offline.js"></script>
+  <script src="/static/js/utils.js"></script>
+  <script src="/static/js/references.js"></script>
+</body>
+</html>

@@ -9,3 +9,51 @@
   <link rel="stylesheet" href="/static/css/base.css">
   <link rel="stylesheet" href="/static/css/auth.css">
 </head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-logo">EUCLID</div>
+    <div class="auth-tagline">All-in-one project management for solo and student developers</div>
+
+    <div class="panel">
+      <div class="panel-head"><span class="bracket">LOGIN</span></div>
+      <div class="panel-body">
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="username">Username *</label>
+            <input type="text" id="username" name="username" autocomplete="username">
+            <div class="field-error" id="err-username"></div>
+          </div>
+          <div class="field">
+            <label for="password">Password *</label>
+            <input type="password" id="password" name="password" autocomplete="current-password">
+            <div class="field-error" id="err-password"></div>
+          </div>
+          <div class="checkline">
+            <input type="checkbox" id="remember" name="remember">
+            <label for="remember">Remember me on this device</label>
+          </div>
+          <div class="auth-actions">
+            <button type="submit" class="btn btn-primary">LOGIN</button>
+          </div>
+        </form>
+        <div class="auth-alt">
+          Don't have an account? <a href="/register"><strong>Register here</strong></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="security-note">
+      SECURITY:
+      <ul>
+        <li>Passwords are hashed and salted before storage</li>
+        <li>Server-side session keeps you signed in</li>
+        <li>All input is validated on the client and the server</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="/static/js/offline.js"></script>
+  <script src="/static/js/utils.js"></script>
+  <script src="/static/js/login.js"></script>
+</body>
+</html>
