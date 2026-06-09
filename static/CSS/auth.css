@@ -1,0 +1,76 @@
+
+.auth-wrap {
+  max-width: 460px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+.auth-logo {
+  text-align: center;
+  border: 1px solid var(--line-dark);
+  padding: 16px;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  background: var(--headbar);
+}
+
+.auth-tagline {
+  text-align: center;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 12px;
+  margin: 8px 0 20px;
+}
+
+.checkline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+.checkline input { width: auto; }
+
+.auth-actions { margin-top: 16px; }
+.auth-actions .btn { width: 100%; text-align: center; }
+
+.auth-alt {
+  text-align: center;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.field-error {
+  color: var(--urgent);
+  font-size: 12px;
+  margin-top: 3px;
+  min-height: 14px;
+}
+
+/* password strength meter */
+.strength {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0 4px;
+}
+.strength span {
+  flex: 1;
+  height: 8px;
+  background: var(--chip);
+  border: 1px solid var(--line);
+}
+.strength.s1 span:nth-child(1) { background: var(--urgent); }
+.strength.s2 span:nth-child(-n+2) { background: var(--warn); }
+.strength.s3 span:nth-child(-n+3) { background: #b8c34a; }
+.strength.s4 span { background: var(--good); }
+.strength-label { font-size: 12px; color: var(--muted); }
+
+.security-note {
+  border: 1px dashed var(--line);
+  padding: 12px;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.security-note ul { margin: 6px 0 0; padding-left: 18px; }

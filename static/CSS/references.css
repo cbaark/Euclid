@@ -1,0 +1,34 @@
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab {
+  border: 1px solid var(--line-dark);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tab:hover { background: var(--chip); }
+.tab.active { background: var(--accent); color: #fff; }
+
+.ref-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ref-table th, .ref-table td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.ref-table th { background: var(--headbar); }
+.ref-table .r-title { font-weight: bold; }
+.ref-table .r-url { font-size: 12px; }
+.ref-table .r-url a { color: #3457a5; word-break: break-all; }
+
+.form-actions { display: flex; gap: 10px; margin-top: 8px; }
+.form-actions .btn-danger { margin-left: auto; }
+
+@media (max-width: 720px) {
+  .ref-table, .ref-table thead, .ref-table tbody, .ref-table tr, .ref-table td, .ref-table th { display: block; }
+  .ref-table thead { display: none; }
+  .ref-table td { border: none; }
+  .ref-table tr { border: 1px solid var(--line); margin-bottom: 10px; padding: 6px; }
+}

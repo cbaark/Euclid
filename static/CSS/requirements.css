@@ -1,0 +1,40 @@
+.progress {
+  height: 22px;
+  border: 1px solid var(--line-dark);
+  background: var(--chip);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--good);
+  transition: width 0.3s;
+}
+
+.overview-counts {
+  display: flex;
+  gap: 24px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.req-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.req-table th, .req-table td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.req-table th { background: var(--headbar); }
+.req-table td.id-cell { font-weight: bold; white-space: nowrap; }
+.req-table .desc-cell { max-width: 360px; }
+
+.form-actions { display: flex; gap: 10px; margin-top: 8px; }
+.form-actions .btn-danger { margin-left: auto; }
+
+@media (max-width: 720px) {
+  .req-table, .req-table thead, .req-table tbody, .req-table tr, .req-table td, .req-table th { display: block; }
+  .req-table thead { display: none; }
+  .req-table td { border: none; }
+  .req-table tr { border: 1px solid var(--line); margin-bottom: 10px; padding: 6px; }
+}
