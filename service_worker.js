@@ -1,7 +1,7 @@
 // Euclid service worker. precache the app shell, then serve assets cache-first
 // and api reads network-first with a cache fallback so the app still opens offline.
 
-const CACHE = "euclid-v2";
+const CACHE = "euclid-v3";
 
 const SHELL = [
   "/",

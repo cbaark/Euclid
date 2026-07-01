@@ -36,13 +36,10 @@ async function csrfToken() {
 
 async function apiFetch(method, url, body) {
   const isWrite = method !== "GET";
-  const headers = { "Content-Type": "application/json" };
-  if (isWrite) {
-    const tok = await csrfToken();
-    if (tok) headers["X-CSRF-Token"] = tok;
-  }
 
-  // offline write goes to the queue so it can sync later
+  // offline write goes to the queue so it can sync later. check this before
+  // asking for a csrf token, because that request would fail offline too and
+  // throw before we ever reach the queue. replay grabs a fresh token itself.
   if (isWrite && !navigator.onLine) {
     await OfflineQueue.enqueue({ method: method, url: url, body: body });
     toast("Saved offline, will sync when back online", "ok");
@@ -51,6 +48,11 @@ async function apiFetch(method, url, body) {
 
   let res;
   try {
+    const headers = { "Content-Type": "application/json" };
+    if (isWrite) {
+      const tok = await csrfToken();
+      if (tok) headers["X-CSRF-Token"] = tok;
+    }
     res = await fetch(url, {
       method: method,
       headers: headers,
@@ -58,7 +60,8 @@ async function apiFetch(method, url, body) {
       body: isWrite ? JSON.stringify(body || {}) : undefined,
     });
   } catch (netErr) {
-    // network died mid request. queue writes, rethrow reads
+    // network died mid request, whether on the token fetch or the write.
+    // queue writes, rethrow reads
     if (isWrite) {
       await OfflineQueue.enqueue({ method: method, url: url, body: body });
       toast("Saved offline, will sync when back online", "ok");
